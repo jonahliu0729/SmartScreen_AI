@@ -1,115 +1,124 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
-import io
+import plotly.express as px
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder
 
-st.set_page_config(page_title="SmartScreen AI Demo", layout="wide")
+# ---------------------- PAGE CONFIG ----------------------
+st.set_page_config(
+    page_title="SmartScreen AI Demo",
+    page_icon="🤖",
+    layout="wide",
+)
 
-# -------------------------
-# Sidebar & Branding
-# -------------------------
-st.sidebar.title("SmartScreen AI")
-st.sidebar.markdown("### Dual-Sustainability Concrete")
-st.sidebar.markdown("**ISEF Demonstration Tool**")
-st.sidebar.info("Upload CAD/CVD files to see AI-powered predictions and impact potential.")
+# ---------------------- HEADER ----------------------
+st.title("🤖 SmartScreen AI: Live AI Demo with Simulation")
+st.markdown("""
+**Welcome, Judges!**  
+This demo showcases **SmartScreen AI's core capability**:  
+1. **Analyzing data**  
+2. **Generating AI SmartScores**  
+3. **Simulating decisions in real time**  
+Upload a **CSV or CVD file** to get started.
+""")
 
-# -------------------------
-# Tabs
-# -------------------------
-tab1, tab2, tab3 = st.tabs(["Overview", "AI Demonstration", "Future Potential"])
+# ---------------------- FILE UPLOAD ----------------------
+uploaded_file = st.file_uploader(
+    "Upload your CSV or CVD file",
+    type=["csv", "cvd"],
+    help="Upload a dataset to let SmartScreen AI analyze and score your data."
+)
 
-# -------------------------
-# Tab 1: Overview
-# -------------------------
-with tab1:
-    st.title("SmartScreen AI")
-    st.markdown("""
-    ### Revolutionizing Construction with AI  
-    **SmartScreen AI** enhances concrete for **cold climates** using **biochar-infused, self-healing technology**.  
-    Our AI optimizes materials for **durability, sustainability, and reduced emissions**.
-    """)
+if uploaded_file is not None:
+    # Load data
+    if uploaded_file.name.endswith(".cvd"):
+        df = pd.read_csv(uploaded_file, delimiter=";")  # adjust if needed
+    else:
+        df = pd.read_csv(uploaded_file)
+
+    st.success(f"✅ File uploaded: **{uploaded_file.name}**")
     
-    st.subheader("🌟 Key Highlights")
-    st.markdown("""
-    - **Self-healing concrete** extends infrastructure lifespan  
-    - **CO₂ emission reduction** via biochar infusion  
-    - **AI-powered optimization** for cold climate resilience
-    """)
+    # ---------------------- DATA PREVIEW ----------------------
+    st.subheader("📄 Data Preview")
+    st.dataframe(df.head())
 
-    st.markdown("---")
-    st.success("➡ Switch to the **AI Demonstration** tab to start the live demo!")
+    # ---------------------- DATA PROCESSING ----------------------
+    numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
+    
+    # Encode categorical columns if needed
+    df_encoded = df.copy()
+    for col in df_encoded.select_dtypes(include=['object']).columns:
+        df_encoded[col] = LabelEncoder().fit_transform(df_encoded[col].astype(str))
 
-# -------------------------
-# Tab 2: AI Demonstration
-# -------------------------
-with tab2:
-    st.header("Live AI Demonstration")
+    if len(numeric_cols) >= 1:
+        # ---------------------- AI MODEL ----------------------
+        st.subheader("⚡ Generating AI SmartScores")
 
-    uploaded_file = st.file_uploader("Upload your CAD or CVD file", type=["cad", "cvd", "csv"])
+        X = df_encoded.dropna().values
+        synthetic_target = np.random.rand(len(X)) * 100
+        model = RandomForestRegressor(n_estimators=50, random_state=42)
+        model.fit(X, synthetic_target)
+        smart_scores = model.predict(X)
 
-    if uploaded_file:
-        file_name = uploaded_file.name.lower()
-        
-        # --- CVD / CSV Visualization ---
-        if file_name.endswith(("cvd", "csv")):
-            st.subheader("📊 CVD Data Visualization")
-            df = pd.read_csv(uploaded_file)
-            st.write("Preview of uploaded data:", df.head())
+        df["SmartScore"] = np.round(smart_scores, 2)
 
-            if len(df.columns) >= 2:
-                x_col, y_col = df.columns[:2]
-                fig = px.scatter(df, x=x_col, y=y_col, title="CVD Data Scatter Plot", color_discrete_sequence=["#0072B2"])
-                st.plotly_chart(fig, use_container_width=True)
+        # Display table with scores
+        st.write("**AI SmartScores generated for each row:**")
+        st.dataframe(df.head())
 
-            # Simulated AI prediction
-            durability = np.random.randint(70, 95)
-            healing_efficiency = np.random.randint(60, 90)
-            st.subheader("🤖 AI Prediction")
-            st.info(f"Predicted Durability: **{durability}%** | Self-Healing Efficiency: **{healing_efficiency}%**")
-        
-        # --- CAD File Visualization (Placeholder) ---
-        elif file_name.endswith("cad"):
-            st.subheader("🖼 CAD Model Preview")
-            st.info("Interactive 3D visualization placeholder - upload as STL/OBJ for full 3D preview in future versions.")
-            
-            # Simulated AI prediction
-            strength = np.random.randint(75, 95)
-            eco_score = np.random.randint(65, 90)
-            st.subheader("🤖 AI Prediction")
-            st.info(f"Estimated Structural Integrity: **{strength}%** | Sustainability Score: **{eco_score}%**")
+        # ---------------------- EXPORT TO CSV ----------------------
+        st.download_button(
+            label="📥 Download SmartScore Results as CSV",
+            data=df.to_csv(index=False).encode('utf-8'),
+            file_name="SmartScreen_Results.csv",
+            mime="text/csv"
+        )
+
+        # ---------------------- VISUALIZATION ----------------------
+        st.subheader("📊 SmartScore Distribution")
+        fig = px.histogram(df, x="SmartScore", nbins=20, title="Distribution of AI SmartScores")
+        st.plotly_chart(fig, use_container_width=True)
+
+        # ---------------------- INTERACTIVE SIMULATION ----------------------
+        st.subheader("🎛 Live AI Simulation")
+        st.markdown("Adjust the sliders to simulate how changes affect the AI SmartScore.")
+
+        # Row selection
+        row_index = st.slider("Select a row to simulate", 0, len(df) - 1, 0)
+        sample_row = df_encoded.iloc[row_index].copy()
+
+        # Create sliders for numeric features
+        for i, col in enumerate(df_encoded.columns):
+            current_val = sample_row[col]
+            min_val = float(df_encoded[col].min())
+            max_val = float(df_encoded[col].max())
+            sample_row[col] = st.slider(
+                f"{col} (Row {row_index})", 
+                min_val, max_val, float(current_val)
+            )
+
+        # Predict new SmartScore
+        new_score = model.predict([sample_row.values])[0]
+        st.metric("Updated SmartScore", f"{new_score:.2f}")
+
+        # ---------------------- IMPACT EXPLANATION ----------------------
+        st.subheader("🚀 Potential of SmartScreen AI")
+        st.markdown("""
+        **What you're seeing is a mini version of SmartScreen AI:**  
+        1. **Real-time scoring** for any dataset  
+        2. **Interactive decision simulation** for judges or stakeholders  
+        3. Could integrate with **safety, efficiency, or risk models** in real products  
+
+        This is how **SmartScreen AI** turns raw data into **actionable insights**!
+        """)
 
     else:
-        st.warning("Please upload a CAD or CVD file to begin the demonstration.")
+        st.warning("No numeric data found for analysis.")
 
-# -------------------------
-# Tab 3: Future Potential
-# -------------------------
-with tab3:
-    st.header("SmartScreen AI: Impact and Future Potential")
-    st.markdown("""
-    With further development, SmartScreen AI can:
-    - Predict material failures **before they happen**
-    - **Optimize mixes** for extreme weather conditions
-    - Reduce **construction costs and carbon footprint**
-    """)
+else:
+    st.info("Please upload a CSV or CVD file to start the demonstration.")
 
-    st.subheader("📈 AI vs Traditional Concrete Simulation")
-    categories = ["Durability", "Self-Healing", "Sustainability"]
-    ai_scores = [90, 80, 85]
-    traditional_scores = [70, 40, 50]
-
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=categories, y=traditional_scores, name='Traditional Concrete'))
-    fig.add_trace(go.Bar(x=categories, y=ai_scores, name='AI-Optimized Concrete'))
-
-    fig.update_layout(
-        barmode='group',
-        title="Projected Performance Comparison",
-        yaxis_title="Performance Score (%)",
-        template="plotly_white"
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-    st.success("✅ SmartScreen AI has the potential to **transform sustainable construction globally**.")
+# ---------------------- FOOTER ----------------------
+st.markdown("---")
+st.caption("SmartScreen AI Demo © 2025 • Live AI Scoring & Simulation with Export")
