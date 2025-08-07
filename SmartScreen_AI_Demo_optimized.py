@@ -109,7 +109,7 @@ with tab1:
     with col1:
         st.subheader("Screen Time Over Time")
         fig_line = px.line(
-            data,
+            st.session_state.screen_time_data,
             x="Date",
             y=["Social Media (hrs)", "Entertainment (hrs)", "Work/Study (hrs)"],
             markers=True,
