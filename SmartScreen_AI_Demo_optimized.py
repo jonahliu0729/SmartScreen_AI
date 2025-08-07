@@ -106,10 +106,14 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🤖 AI Insights", "🔮 Fo
 with tab1:
     col1, col2 = st.columns([2, 1])
 
+    # Normalize dates for plotting
+    data = st.session_state.screen_time_data.copy()
+    data["Date"] = pd.to_datetime(data["Date"]).dt.date  # <-- Normalize date
+
     with col1:
         st.subheader("Screen Time Over Time")
         fig_line = px.line(
-            st.session_state.screen_time_data,
+            data,
             x="Date",
             y=["Social Media (hrs)", "Entertainment (hrs)", "Work/Study (hrs)"],
             markers=True,
@@ -129,7 +133,6 @@ with tab1:
 
     st.subheader("Screen Time Log")
     st.dataframe(data.set_index("Date").style.format("{:.2f}"))
-
 # ===== TAB 2: AI INSIGHTS =====
 with tab2:
     st.subheader("Today's SmartScreen AI Nudges")
