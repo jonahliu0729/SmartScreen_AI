@@ -75,19 +75,27 @@ st.markdown("Track usage, get AI nudges, and forecast your screen time – now w
 # ==========================
 # Simulate a new day
 # ==========================
+# Button to simulate a new day of screen time
 if st.button("📊 Simulate Today's Usage"):
-    today = datetime.now()
+    today = datetime.now().date()  # Use date only (no time)
+    
+    # Normalize all existing dates to just date (no timestamp)
+    existing_data = st.session_state.screen_time_data.copy()
+    existing_data["Date"] = pd.to_datetime(existing_data["Date"]).dt.date
+    
+    # Remove existing entry for today
+    existing_data = existing_data[existing_data["Date"] != today]
+    
+    # Generate new data for today
     new_day = pd.DataFrame({
         "Date": [today],
         "Social Media (hrs)": [round(random.uniform(0.5, 4), 2)],
         "Entertainment (hrs)": [round(random.uniform(0.5, 3), 2)],
         "Work/Study (hrs)": [round(random.uniform(0.5, 5), 2)],
     })
-    st.session_state.screen_time_data = pd.concat(
-        [st.session_state.screen_time_data, new_day]
-    ).drop_duplicates(subset=["Date"]).sort_values("Date")
 
-data = st.session_state.screen_time_data.copy()
+    # Combine and store
+    st.session_state.screen_time_data = pd.concat([existing_data, new_day]).sort_values("Date")
 
 # ==========================
 # Tabs
