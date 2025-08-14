@@ -75,15 +75,19 @@ st.markdown("Track usage, get AI nudges, and forecast your screen time – now w
 # ==========================
 # Simulate a new day
 # ==========================
+# ==========================
+# Simulate a new day (Fixed)
+# ==========================
 if st.button("📊 Simulate Today's Usage"):
     df = st.session_state.screen_time_data.copy()
-    df["Date"] = pd.to_datetime(df["Date"])
+    df["Date"] = pd.to_datetime(df["Date"]).dt.date  # Normalize to just date
 
-    last_date = df["Date"].max()
+    last_date = max(df["Date"])
     next_date = last_date + timedelta(days=1)
 
+    # Prevent duplication
     if next_date in df["Date"].values:
-        st.warning(f"Data for {next_date.date()} already exists.")
+        st.warning(f"Data for {next_date} already exists.")
     else:
         new_day = pd.DataFrame({
             "Date": [next_date],
@@ -91,10 +95,15 @@ if st.button("📊 Simulate Today's Usage"):
             "Entertainment (hrs)": [round(random.uniform(0.5, 3), 2)],
             "Work/Study (hrs)": [round(random.uniform(0.5, 5), 2)],
         })
-        updated_df = pd.concat([df, new_day], ignore_index=True).sort_values("Date")
-        st.session_state.screen_time_data = updated_df
-        st.success(f"Simulated new data for {next_date.date()}!")
 
+        updated_df = pd.concat([df, new_day], ignore_index=True).sort_values("Date")
+
+        # Optional: limit to last 30 days
+        if len(updated_df) > 30:
+            updated_df = updated_df.tail(30)
+
+        st.session_state.screen_time_data = updated_df
+        st.success(f"✅ Simulated new data for {next_date}")
 # ==========================
 # Tabs
 # ==========================
