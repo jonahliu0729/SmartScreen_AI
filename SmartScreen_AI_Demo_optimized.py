@@ -75,32 +75,25 @@ st.markdown("Track usage, get AI nudges, and forecast your screen time – now w
 # ==========================
 # Simulate a new day
 # ==========================
-# Button to simulate a new day of screen time
 if st.button("📊 Simulate Today's Usage"):
-    # Get the last date in the dataset
-    last_date = st.session_state.screen_time_data["Date"].max()
-    last_date = pd.to_datetime(last_date).date()
+    df = st.session_state.screen_time_data.copy()
+    df["Date"] = pd.to_datetime(df["Date"])
 
-    # Generate the "next" date
-    today = last_date + timedelta(days=1)
+    last_date = df["Date"].max()
+    next_date = last_date + timedelta(days=1)
 
-    # Remove duplicate (if it somehow already exists)
-    existing_data = st.session_state.screen_time_data.copy()
-    existing_data["Date"] = pd.to_datetime(existing_data["Date"]).dt.date
-    existing_data = existing_data[existing_data["Date"] != today]
-
-    # New simulated day
-    new_day = pd.DataFrame({
-        "Date": [today],
-        "Social Media (hrs)": [round(random.uniform(0.5, 4), 2)],
-        "Entertainment (hrs)": [round(random.uniform(0.5, 3), 2)],
-        "Work/Study (hrs)": [round(random.uniform(0.5, 5), 2)],
-    })
-
-    # Save back to session
-    updated_data = pd.concat([existing_data, new_day]).sort_values("Date")
-    updated_data["Date"] = pd.to_datetime(updated_data["Date"])  # normalize
-    st.session_state.screen_time_data = updated_data
+    if next_date in df["Date"].values:
+        st.warning(f"Data for {next_date.date()} already exists.")
+    else:
+        new_day = pd.DataFrame({
+            "Date": [next_date],
+            "Social Media (hrs)": [round(random.uniform(0.5, 4), 2)],
+            "Entertainment (hrs)": [round(random.uniform(0.5, 3), 2)],
+            "Work/Study (hrs)": [round(random.uniform(0.5, 5), 2)],
+        })
+        updated_df = pd.concat([df, new_day], ignore_index=True).sort_values("Date")
+        st.session_state.screen_time_data = updated_df
+        st.success(f"Simulated new data for {next_date.date()}!")
 
 # ==========================
 # Tabs
@@ -111,9 +104,8 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Dashboard", "🤖 AI Insights", "🔮 Fo
 with tab1:
     col1, col2 = st.columns([2, 1])
 
-    # Normalize dates for plotting
     data = st.session_state.screen_time_data.copy()
-    data["Date"] = pd.to_datetime(data["Date"]).dt.date  # <-- Normalize date
+    data["Date"] = pd.to_datetime(data["Date"])  # Keep datetime format for clean plotting
 
     with col1:
         st.subheader("Screen Time Over Time")
@@ -138,6 +130,7 @@ with tab1:
 
     st.subheader("Screen Time Log")
     st.dataframe(data.set_index("Date").style.format("{:.2f}"))
+
 # ===== TAB 2: AI INSIGHTS =====
 with tab2:
     st.subheader("Today's SmartScreen AI Nudges")
@@ -190,11 +183,11 @@ with tab3:
 with tab4:
     st.subheader("🧠 Reflection & Streak Tracking")
     
-    # Calculate streak
-    avg_social = data["Social Media (hrs)"].iloc[-1] <= 2.5
-    avg_entertainment = data["Entertainment (hrs)"].iloc[-1] <= 2
-    avg_work = data["Work/Study (hrs)"].iloc[-1] >= 1
-    
+    latest = data.iloc[-1]
+    avg_social = latest["Social Media (hrs)"] <= 2.5
+    avg_entertainment = latest["Entertainment (hrs)"] <= 2
+    avg_work = latest["Work/Study (hrs)"] >= 1
+
     if avg_social and avg_entertainment and avg_work:
         st.session_state.streak += 1
         st.success(f"🔥 Current Streak: {st.session_state.streak} days!")
