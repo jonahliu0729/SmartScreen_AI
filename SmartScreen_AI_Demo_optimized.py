@@ -55,6 +55,35 @@ if "last_reflection_time" not in st.session_state:
     st.session_state.last_reflection_time = None
 if "override_log" not in st.session_state:
     st.session_state.override_log = []
+if "show_welcome" not in st.session_state:
+    st.session_state.show_welcome = True
+
+# ==========================
+# Welcome Screen Section
+# ==========================
+if st.session_state.show_welcome:
+    st.markdown("<h1 style='text-align: center;'>👋 Welcome to SmartScreen AI</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>A smarter way to manage, analyze, and forecast screen time</p>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        with st.expander("📊 Track Daily Habits"):
+            st.write("Automatically logs simulated screen time across key categories: Social Media, Entertainment, and Work/Study.")
+
+    with col2:
+        with st.expander("🤖 AI Insights & Nudges"):
+            st.write("Intelligent prompts encourage healthy digital habits based on your daily usage patterns.")
+
+    with col3:
+        with st.expander("🔮 Forecast Future Trends"):
+            st.write("Visualize where your screen time is heading with linear regression-based predictions.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🚀 Start Demo Now"):
+        st.session_state.show_welcome = False
+        st.experimental_rerun()
+    st.stop()
 
 # ==========================
 # Sidebar Controls
@@ -75,19 +104,15 @@ st.markdown("Track usage, get AI nudges, and forecast your screen time – now w
 # ==========================
 # Simulate a new day
 # ==========================
-# ==========================
-# Simulate a new day (Fixed)
-# ==========================
 if st.button("📊 Simulate Today's Usage"):
     df = st.session_state.screen_time_data.copy()
-    df["Date"] = pd.to_datetime(df["Date"]).dt.date  # Normalize to just date
+    df["Date"] = pd.to_datetime(df["Date"])
 
-    last_date = max(df["Date"])
+    last_date = df["Date"].max()
     next_date = last_date + timedelta(days=1)
 
-    # Prevent duplication
     if next_date in df["Date"].values:
-        st.warning(f"Data for {next_date} already exists.")
+        st.warning(f"Data for {next_date.date()} already exists.")
     else:
         new_day = pd.DataFrame({
             "Date": [next_date],
@@ -95,15 +120,10 @@ if st.button("📊 Simulate Today's Usage"):
             "Entertainment (hrs)": [round(random.uniform(0.5, 3), 2)],
             "Work/Study (hrs)": [round(random.uniform(0.5, 5), 2)],
         })
-
         updated_df = pd.concat([df, new_day], ignore_index=True).sort_values("Date")
-
-        # Optional: limit to last 30 days
-        if len(updated_df) > 30:
-            updated_df = updated_df.tail(30)
-
         st.session_state.screen_time_data = updated_df
-        st.success(f"✅ Simulated new data for {next_date}")
+        st.success(f"Simulated new data for {next_date.date()}!")
+
 # ==========================
 # Tabs
 # ==========================
@@ -114,7 +134,7 @@ with tab1:
     col1, col2 = st.columns([2, 1])
 
     data = st.session_state.screen_time_data.copy()
-    data["Date"] = pd.to_datetime(data["Date"])  # Keep datetime format for clean plotting
+    data["Date"] = pd.to_datetime(data["Date"])
 
     with col1:
         st.subheader("Screen Time Over Time")
