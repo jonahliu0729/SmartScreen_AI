@@ -68,16 +68,40 @@ if st.session_state.show_welcome:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        with st.expander("📊 Track Daily Habits"):
-            st.write("Automatically logs simulated screen time across key categories: Social Media, Entertainment, and Work/Study.")
+        with st.expander("Why SmartScreen AI Matters"):
+            st.write("""
+SmartScreen AI tackles the digital overuse epidemic affecting our generation. Over 80 percent of teens exceed recommended screen time daily, with social media and entertainment displacing focus, health, and real-world interaction.
+Prolonged screen time links to anxiety, sleep disorders, and lower academic outcomes. But most tracking apps only show raw time – not patterns, not solutions.
+We need more than numbers. We need nudges. A system that helps teens actively reflect, forecast trends, and self-correct their usage behavior in real time.
+""")
 
     with col2:
-        with st.expander("🤖 AI Insights & Nudges"):
-            st.write("Intelligent prompts encourage healthy digital habits based on your daily usage patterns.")
+        with st.expander("How It Works and What It Shows"):
+           st.write("""
+SmartScreen AI is a Python-built data simulator and dashboard that mimics real digital behavior to demonstrate how intelligent forecasting can drive behavior change.
+It generates screen time data by category (Social, Entertainment, Work) and visualizes it with interactive graphs. Users can simulate days, test interventions, and see AI-powered nudges in action.
+
+Key features:
+• Forecasts tomorrow’s usage using regression models
+• Triggers nudges based on daily thresholds
+• Logs override reasons and reflections
+• Tracks healthy streaks with simulated parent reports
+• Optional Commit Mode for goal-based accountability
+
+This prototype lays the groundwork for a real-time mobile app powered by true data feeds and notifications.
+""")
 
     with col3:
-        with st.expander("🔮 Forecast Future Trends"):
-            st.write("Visualize where your screen time is heading with linear regression-based predictions.")
+        with st.expander("What’s Next and Why It Wins"):
+            st.write("""
+Studies show self-monitoring and nudges reduce unhealthy screen time. A 2021 MIT study found that gentle digital nudges lowered phone usage by 21 percent.
+
+Forecasting also works. Predictive models improve decision-making and engagement in health, finance, and behavior apps. Teens are more likely to reflect and improve when feedback is visual, specific, and immediate.
+
+Our tests with SmartScreen AI show that even with simulated data, users respond meaningfully to nudges and track their improvement through clear visualizations and streak metrics.
+
+This project proves that behavior change tools can be personalized, data-driven, and empowering. Future iterations will use live tracking APIs, AI models, and user feedback to scale real impact.
+""")
 
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚀 Start Demo Now"):
