@@ -82,7 +82,7 @@ if st.session_state.show_welcome:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🚀 Start Demo Now"):
         st.session_state.show_welcome = False
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # ==========================
